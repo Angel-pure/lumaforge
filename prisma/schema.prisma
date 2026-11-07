@@ -12,12 +12,12 @@ enum MemberRole { OWNER ADMIN MEMBER }
 enum ContentStatus { DRAFT IN_REVIEW APPROVED SCHEDULED PUBLISHED ARCHIVED }
 enum BillingProvider { STRIPE RAZORPAY }
 
-a model User {
-  id           String        @id @default(cuid())
-  email        String        @unique
+model User {
+  id           String         @id @default(cuid())
+  email        String         @unique
   name         String?
   passwordHash String?
-  createdAt    DateTime      @default(now())
+  createdAt    DateTime       @default(now())
   memberships  Membership[]
   usage        UsageRecord[]
   content      Content[]
@@ -57,17 +57,17 @@ model UsageRecord {
 }
 
 model Content {
-  id          String        @id @default(cuid())
+  id          String          @id @default(cuid())
   title       String
   body        String
   channel     String
-  status      ContentStatus  @default(DRAFT)
+  status      ContentStatus   @default(DRAFT)
   userId      String
   workspaceId String
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   versions    ContentVersion[]
   @@index([workspaceId, status])
 }
@@ -81,28 +81,28 @@ model ContentVersion {
 }
 
 model Subscription {
-  id                   String          @id @default(cuid())
+  id                    String          @id @default(cuid())
   workspaceId           String
   userId                String
   provider              BillingProvider
   providerCustomerId    String?
-  providerSubscriptionId String?       @unique
-  status               String
-  plan                 Plan
+  providerSubscriptionId String?        @unique
+  status                String
+  plan                  Plan
   currentPeriodEnd     DateTime?
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
-  workspace             Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  user                 User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace             Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user                  User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@index([workspaceId, status])
 }
 
 model WebhookEvent {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   provider    BillingProvider
   externalId  String
   eventType   String
   processedAt DateTime?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime        @default(now())
   @@unique([provider, externalId])
 }
