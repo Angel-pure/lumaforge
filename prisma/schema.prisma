@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan { FREE CREATOR TEAM SCALE }
+enum MemberRole { OWNER ADMIN MEMBER }
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  memberships Membership[]
+  usage      UsageRecord[]
+}
+
+model Workspace {
+  id          String       @id @default(cuid())
+  name        String
+  plan        Plan        @default(FREE)
+  createdAt   DateTime     @default(now())
+  memberships Membership[]
+  usage       UsageRecord[]
+}
+
+model Membership {
+  userId      String
+  workspaceId String
+  role        MemberRole @default(MEMBER)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  @@id([userId, workspaceId])
+}
+
+model UsageRecord {
+  id          String   @id @default(cuid())
+  userId      String
+  workspaceId String
+  period      String
+  generations Int      @default(0)
+  createdAt   DateTime @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  @@unique([userId, workspaceId, period])
+}
