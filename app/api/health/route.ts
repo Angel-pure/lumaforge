@@ -1,9 +1,3 @@
-import { NextResponse } from "next/server";
-
-export function GET() {
-  return NextResponse.json({
-    ok: true,
-    service: "lumaforge",
-    timestamp: new Date().toISOString(),
-  });
+export async function GET() {
+  return Response.json({ message: "LumaForge service is available", ok: true });
 }
