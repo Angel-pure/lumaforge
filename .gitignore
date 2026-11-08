@@ -1,0 +1,9 @@
+# macOS / Linux
+.env*
+!.env.example
+node_modules/
+.next/
+coverage/
+dist/
+.DS_Store
+npm-debug.log*

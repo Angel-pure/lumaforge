@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  FREE
+  CREATOR
+  TEAM
+  SCALE
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum ContentStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum BillingProvider {
+  STRIPE
+  RAZORPAY
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String?
+  passwordHash  String?
+  createdAt     DateTime       @default(now())
+  memberships   Membership[]
+  usage         UsageRecord[]
+  content       Content[]
+  subscriptions Subscription[]
+}
+
+model Workspace {
+  id            String         @id @default(cuid())
+  name          String
+  plan          Plan           @default(FREE)
+  createdAt     DateTime       @default(now())
+  memberships   Membership[]
+  usage         UsageRecord[]
+  content       Content[]
+  subscriptions Subscription[]
+}
+
+model Membership {
+  userId      String
+  workspaceId String
+  role        MemberRole @default(MEMBER)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@id([userId, workspaceId])
+  @@index([workspaceId, role])
+}
+
+model UsageRecord {
+  id          String   @id @default(cuid())
+  userId      String
+  workspaceId String
+  period      String
+  generations Int      @default(0)
+  createdAt   DateTime @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId, period])
+  @@index([workspaceId, period])
+}
+
+model Content {
+  id          String         @id @default(cuid())
+  title       String
+  body        String
+  channel     String
+  status      ContentStatus  @default(DRAFT)
+  userId      String
+  workspaceId String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  versions    ContentVersion[]
+
+  @@index([workspaceId, status])
+  @@index([workspaceId, updatedAt])
+}
+
+model ContentVersion {
+  id        String   @id @default(cuid())
+  contentId String
+  body      String
+  createdAt DateTime @default(now())
+  content   Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@index([contentId, createdAt])
+}
+
+model Subscription {
+  id                    String          @id @default(cuid())
+  workspaceId           String
+  userId                String
+  provider              BillingProvider
+  providerCustomerId    String?
+  providerSubscriptionId String?        @unique
+  status                String
+  plan                  Plan
+  currentPeriodEnd      DateTime?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  workspace             Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user                  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, status])
+  @@index([userId, status])
+}
+
+model WebhookEvent {
+  id          String         @id @default(cuid())
+  provider    BillingProvider
+  externalId  String
+  eventType   String
+  processedAt DateTime?
+  createdAt   DateTime       @default(now())
+
+  @@unique([provider, externalId])
+  @@index([processedAt, createdAt])
+}
